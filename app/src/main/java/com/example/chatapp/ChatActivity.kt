@@ -15,7 +15,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var messageBox:EditText
     private lateinit var sendButton: ImageView
     private lateinit var messageAdapter: MessageAdapter
-    private lateinit var messageList: ArrayList<Message>
+    private lateinit var messageList: ArrayList<MessageModel>
     private lateinit var mDbRef: DatabaseReference
     var receiverRoom: String?=null
     var senderRoom: String?=null
@@ -24,21 +24,21 @@ class ChatActivity : AppCompatActivity() {
         setContentView(R.layout.activity_chat)
         val name= intent.getStringExtra("name")
         val receiverUid= intent.getStringExtra("uid")
-       val senderUid= FirebaseAuth.getInstance().currentUser?.uid
-      val mDbRef= FirebaseDatabase.getInstance().getReference()
+        val senderUid= FirebaseAuth.getInstance().currentUser?.uid
+        val mDbRef= FirebaseDatabase.getInstance().getReference()
         senderRoom=receiverUid+senderUid
         receiverRoom=senderUid+receiverUid
 
         supportActionBar?.title=name
 
         chatRecyclerView=findViewById(R.id.chatRecyclerView)
-       messageBox=findViewById(R.id.messageBox)
+        messageBox=findViewById(R.id.messageBox)
         sendButton=findViewById(R.id.sentButton)
-          messageList= ArrayList()
-     messageAdapter= MessageAdapter(this,messageList)
+        messageList= ArrayList()
+        messageAdapter= MessageAdapter(this,messageList)
         chatRecyclerView.layoutManager=LinearLayoutManager(this)
         chatRecyclerView.adapter=messageAdapter
-     //logic for adding data to recycler view
+        //logic for adding data to recycler view
         mDbRef.child("chats").child(senderRoom!!).child("messages")
             .addValueEventListener(object :ValueEventListener{
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -46,7 +46,7 @@ class ChatActivity : AppCompatActivity() {
                     messageList.clear()
                     for(postSnapshot in snapshot.children)
                     {
-                        val message=postSnapshot.getValue(Message::class.java)
+                        val message=postSnapshot.getValue(MessageModel::class.java)
                         messageList.add(message!!)
                     }
                     messageAdapter.notifyDataSetChanged()
@@ -59,14 +59,14 @@ class ChatActivity : AppCompatActivity() {
             })
         //adding the message to the database
         sendButton.setOnClickListener(){
-           val message=messageBox.text.toString()
-            val messageObject=Message(message,senderUid)
-         mDbRef.child("chats").child(senderRoom!!).child("messages").push()
-             .setValue(messageObject).addOnSuccessListener {
-                 mDbRef.child("chats").child(receiverRoom!!).child("messages").push()
-                     .setValue(messageObject)
-             }
-        messageBox.setText("")
+            val message=messageBox.text.toString()
+            val messageObject=MessageModel(message,senderUid)
+            mDbRef.child("chats").child(senderRoom!!).child("messages").push()
+                .setValue(messageObject).addOnSuccessListener {
+                    mDbRef.child("chats").child(receiverRoom!!).child("messages").push()
+                        .setValue(messageObject)
+                }
+            messageBox.setText("")
 
         }
 
